@@ -18,7 +18,9 @@ export default function DFSBalanceBox() {
           <div className="flex h-full items-center border-slate-200 px-2">
             <WalletIcon size={22} />
           </div>
-          <div className="flex h-full items-center pr-2">${currentBalance}</div>
+          <div className="flex h-full items-center pr-2">
+            ${Number(currentBalance).toFixed(4)}
+          </div>
         </div>
       </Tooltip>
     </>
