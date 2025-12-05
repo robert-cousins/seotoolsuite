@@ -36,11 +36,11 @@ export default function Header() {
           </div>
         </div>
         <div className="header-right flex h-fit items-stretch gap-2">
-          <div className="flex items-center rounded-md border-2 border-slate-200">
+          <div className="flex items-center overflow-hidden rounded-md border-2 border-slate-200">
             <Tooltip content="Keyword Research">
               <Link
                 href="/tool/keyword-research"
-                className={`flex items-center gap-1 rounded-md px-2 py-2 text-sky-950 ${isToolActive("keyword-research") ? "bg-sky-950/10" : ""}`}
+                className={`flex items-center gap-1 px-2 py-2 text-sky-950 ${isToolActive("keyword-research") ? "bg-sky-950/10" : ""}`}
               >
                 <TelescopeIcon size={24} />
               </Link>
