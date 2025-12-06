@@ -340,6 +340,8 @@ const KeywordResearchTool = () => {
       limit: number,
       offset: number,
     ) => {
+      const dfsSandboxEnabled =
+        getLocalStorageItem("DATAFORSEO_SANDBOX") === "true";
       setIsDataPageActive(false);
       setIsLoading(true);
 
@@ -355,18 +357,24 @@ const KeywordResearchTool = () => {
         return;
       }
 
-      try {
-        trackUmamiEvent("keyword-research", {
-          location:
-            getDataForSEOLocationFromCode(Number(location_code))
-              ?.location_name ?? "N/A",
-        });
-      } catch (error) {
-        console.error(error);
+      if (!dfsSandboxEnabled) {
+        try {
+          trackUmamiEvent("keyword-research", {
+            location:
+              getDataForSEOLocationFromCode(Number(location_code))
+                ?.location_name ?? "N/A",
+          });
+        } catch (error) {
+          console.error(error);
+        }
       }
 
       try {
-        const DataForSEOService = new DataForSEO(dfsUsername, dfsPassword);
+        const DataForSEOService = new DataForSEO(
+          dfsUsername,
+          dfsPassword,
+          dfsSandboxEnabled,
+        );
         const apiResponse = await DataForSEOService.getKeywordSuggestions(
           keyword,
           Number(location_code),
@@ -434,7 +442,7 @@ const KeywordResearchTool = () => {
           }, 100);
         }
 
-        refreshDFSBalance();
+        if (!dfsSandboxEnabled) refreshDFSBalance();
       } catch (error: any) {
         setIsLoading(false);
         setFormError(error.message);

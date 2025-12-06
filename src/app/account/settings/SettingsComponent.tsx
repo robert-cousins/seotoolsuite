@@ -1,15 +1,27 @@
 "use client";
 
-import { getLocalStorageItem, setLocalStorageItem } from "@/utils/localStorage";
-import { addToast, Button, Form, Input, Tooltip } from "@heroui/react";
-import { useState } from "react";
+import {
+  getLocalStorageItem,
+  removeLocalStorageItem,
+  setLocalStorageItem,
+} from "@/utils/localStorage";
+import {
+  addToast,
+  Button,
+  Checkbox,
+  Form,
+  Input,
+  Tooltip,
+} from "@heroui/react";
+import { useCallback, useEffect, useState } from "react";
 import DataForSEO from "@/services/DataForSEO";
-import { LockIcon } from "lucide-react";
+import { BoxIcon, LockIcon } from "lucide-react";
 import Link from "next/link";
 import useDFSBalance from "@/hooks/useDFSBalance";
 
 export default function SettingsComponent() {
   const { refreshDFSBalance } = useDFSBalance(false);
+  const [dfsSandboxEnabled, setDFSSandboxEnabled] = useState<boolean>(false);
 
   const [isDFSCredentialsFormLoading, setIsDFSCredentialsFormLoading] =
     useState<boolean>(false);
@@ -55,6 +67,19 @@ export default function SettingsComponent() {
       setIsDFSCredentialsFormLoading(false);
     }
   };
+
+  const handleDFSSandboxChange = useCallback((enabled: boolean) => {
+    setDFSSandboxEnabled(enabled);
+    if (enabled) {
+      setLocalStorageItem("DATAFORSEO_SANDBOX", "true");
+    } else {
+      removeLocalStorageItem("DATAFORSEO_SANDBOX");
+    }
+  }, []);
+
+  useEffect(() => {
+    setDFSSandboxEnabled(getLocalStorageItem("DATAFORSEO_SANDBOX") === "true");
+  }, []);
 
   return (
     <div className="settings-page px-4 py-4 md:px-8 md:py-8">
@@ -126,6 +151,22 @@ export default function SettingsComponent() {
                 Save
               </Button>
             </Form>
+            <Tooltip content="Turn on the API sandbox mode to use free, dummy data. Ideal for testing and development.">
+              <div className="mt-4 flex w-fit items-stretch rounded-md border-2 border-slate-200">
+                <div className="border-r-2 border-slate-200 p-2">
+                  <BoxIcon size={22} />
+                </div>
+                <div className="flex items-center px-2 text-base">
+                  <Checkbox
+                    isSelected={dfsSandboxEnabled}
+                    onValueChange={handleDFSSandboxChange}
+                    size="md"
+                  >
+                    Sandbox Mode
+                  </Checkbox>
+                </div>
+              </div>
+            </Tooltip>
           </div>
         </div>
       </div>
