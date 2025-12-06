@@ -20,11 +20,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script
-          defer
-          src="https://cloud.umami.is/script.js"
-          data-website-id="871fbcb5-8cc4-4cd4-9217-6577eae86a2e"
-        ></script>
+        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID ? (
+          <script
+            defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
+          ></script>
+        ) : null}
       </head>
       <body className={`seotoolsuite-app antialiased ${poppins.className}`}>
         <Providers>{children}</Providers>
