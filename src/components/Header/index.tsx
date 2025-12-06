@@ -31,9 +31,14 @@ export default function Header() {
               className="w-38 lg:w-48"
             />
           </Link>
-          <div className="block rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-black/60">
+          <Link
+            href="https://github.com/nitishkgupta/seotoolsuite/blob/main/CHANGELOG.md"
+            target="_blank"
+            rel="nofollow"
+            className="block rounded-md border border-slate-200 px-2 py-1 text-sm font-medium text-black/60"
+          >
             v{APP_VERSION}
-          </div>
+          </Link>
         </div>
         <div className="header-right flex h-fit items-stretch gap-2">
           <div className="flex items-center overflow-hidden rounded-md border-2 border-slate-200">
