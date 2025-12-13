@@ -1,5 +1,9 @@
 # SEOToolSuite Changelog
 
+## v0.3.1
+
+- Update packages.
+
 ## v0.3.0
 
 - Use environment variable for Umami tracking.
