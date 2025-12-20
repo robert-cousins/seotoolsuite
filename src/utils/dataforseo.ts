@@ -23,12 +23,9 @@ export type DataForSEOKeywordFilters = {
   maxKD?: number;
   includeKeyword?: string;
   excludeKeyword?: string;
-  searchIntent?:
-    | "informational"
-    | "navigational"
-    | "commercial"
-    | "transactional"
-    | null;
+  searchIntents?: Array<
+    "informational" | "navigational" | "commercial" | "transactional"
+  >;
 };
 
 /**
@@ -151,17 +148,17 @@ export function buildDataForSEOKeywordFilters(
 
       if (key === "includeKeyword" && typeof value === "string") {
         if (dfsFilters.length > 0) dfsFilters.push("and");
-        dfsFilters.push(["keyword", "match", value]);
+        dfsFilters.push(["keyword", "like", `%${value}%`]);
       }
 
       if (key === "excludeKeyword" && typeof value === "string") {
         if (dfsFilters.length > 0) dfsFilters.push("and");
-        dfsFilters.push(["keyword", "not_match", value]);
+        dfsFilters.push(["keyword", "not_like", `%${value}%`]);
       }
 
-      if (key === "searchIntent" && typeof value === "string") {
+      if (key === "searchIntents" && Array.isArray(value) && value.length > 0) {
         if (dfsFilters.length > 0) dfsFilters.push("and");
-        dfsFilters.push(["search_intent_info.main_intent", "=", value]);
+        dfsFilters.push(["search_intent_info.main_intent", "in", value]);
       }
     }
 
