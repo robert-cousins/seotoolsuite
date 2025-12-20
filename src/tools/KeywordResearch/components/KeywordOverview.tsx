@@ -624,7 +624,7 @@ const KeywordOverview = ({
                 <div className="mt-4 flex flex-col gap-1.5">
                   {Object.entries(data.ageDistribution).map(([key, value]) => (
                     <div className="flex flex-row items-center gap-2" key={key}>
-                      <div className="min-w-12 shrink-0 text-lg">{key}</div>
+                      <div className="min-w-14 shrink-0 text-lg">{key}</div>
                       <div className="shrink-0">|</div>
                       {value > 0 && (
                         <div
