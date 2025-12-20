@@ -601,9 +601,9 @@ const KeywordResearchTool = () => {
           formData.get("excludeKeyword") !== null && {
             excludeKeyword: formData.get("excludeKeyword") as any,
           }),
-        ...(formData.get("searchIntent") !== "" &&
-          formData.get("searchIntent") !== null && {
-            searchIntent: formData.get("searchIntent") as any,
+        ...(formData.getAll("searchIntents[]") &&
+          formData.getAll("searchIntents[]").length > 0 && {
+            searchIntents: formData.getAll("searchIntents[]") as any,
           }),
       });
     },

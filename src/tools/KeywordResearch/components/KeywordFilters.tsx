@@ -2,10 +2,10 @@
 
 import {
   Button,
+  Checkbox,
+  CheckboxGroup,
   Input,
   NumberInput,
-  Radio,
-  RadioGroup,
   Tooltip,
 } from "@heroui/react";
 import {
@@ -18,7 +18,6 @@ import {
   SquaresIntersectIcon,
   TargetIcon,
   TrendingUpIcon,
-  XIcon,
 } from "lucide-react";
 import { memo, useState } from "react";
 
@@ -33,12 +32,9 @@ export type KeywordFiltersInitialValues = {
   maxKD?: number;
   includeKeyword?: string;
   excludeKeyword?: string;
-  searchIntent?:
-    | "informational"
-    | "navigational"
-    | "commercial"
-    | "transactional"
-    | null;
+  searchIntents?: Array<
+    "informational" | "navigational" | "commercial" | "transactional"
+  >;
 };
 
 const KeywordFilters = ({
@@ -56,14 +52,15 @@ const KeywordFilters = ({
       <div
         className={`flex w-full items-center justify-between gap-1 rounded-t-md border-slate-200 py-2 pr-2 pl-4 text-base ${filtersVisible ? "border-b-2" : ""}`}
       >
-        <a
-          href="#!"
+        <button
+          type="button"
+          tabIndex={-1}
           onClick={() => setFiltersVisible(!filtersVisible)}
-          className="flex items-center gap-1"
+          className="flex cursor-pointer items-center gap-1"
         >
           <FunnelIcon size={16} />
           <span>Filters</span>
-        </a>
+        </button>
         <Button
           isIconOnly
           size="sm"
@@ -387,6 +384,9 @@ const KeywordFilters = ({
                 <Input
                   name="includeKeyword"
                   variant="bordered"
+                  classNames={{
+                    inputWrapper: "shadow-none",
+                  }}
                   radius="sm"
                   type="text"
                   size="md"
@@ -409,6 +409,9 @@ const KeywordFilters = ({
                 <Input
                   name="excludeKeyword"
                   variant="bordered"
+                  classNames={{
+                    inputWrapper: "shadow-none",
+                  }}
                   radius="sm"
                   type="text"
                   size="md"
@@ -429,48 +432,32 @@ const KeywordFilters = ({
                 <BadgeQuestionMarkIcon size={16} />
                 Search Intent
               </div>
-              {typeof initialValuesState.searchIntent === "string" && (
-                <Button
-                  variant="light"
-                  size="sm"
-                  isIconOnly
-                  className="h-auto w-auto px-0 py-2"
-                  onPress={() =>
-                    setInitialValuesState({
-                      ...initialValuesState,
-                      searchIntent: null,
-                    })
-                  }
-                >
-                  <XIcon size={12} />
-                </Button>
-              )}
             </div>
             <div className="mt-2 w-full">
-              <RadioGroup
-                name="searchIntent"
+              <CheckboxGroup
+                name="searchIntents[]"
                 orientation="horizontal"
-                value={initialValuesState.searchIntent}
+                value={initialValuesState.searchIntents}
                 onValueChange={(val: any) =>
                   setInitialValuesState({
                     ...initialValuesState,
-                    searchIntent: val,
+                    searchIntents: val,
                   })
                 }
               >
-                <Radio value="informational" size="sm">
+                <Checkbox value="informational" size="sm">
                   Informational
-                </Radio>
-                <Radio value="navigational" size="sm">
+                </Checkbox>
+                <Checkbox value="navigational" size="sm">
                   Navigational
-                </Radio>
-                <Radio value="commercial" size="sm">
+                </Checkbox>
+                <Checkbox value="commercial" size="sm">
                   Commercial
-                </Radio>
-                <Radio value="transactional" size="sm">
+                </Checkbox>
+                <Checkbox value="transactional" size="sm">
                   Transactional
-                </Radio>
-              </RadioGroup>
+                </Checkbox>
+              </CheckboxGroup>
             </div>
           </div>
         </div>
