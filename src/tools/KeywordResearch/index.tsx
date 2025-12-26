@@ -183,24 +183,26 @@ const KeywordResearchTool = () => {
         headerAlign: "left",
         cellClassName: "min-h-12 relative group",
         renderCell: (params) => (
-          <div className="py-2">
-            {params.value}
-            <Tooltip content="Check Keyword Overview">
-              <button
-                onClick={(e) =>
-                  handleKWOverviewClick(
-                    e,
-                    params.value,
-                    params.row.location_code,
-                    params.row.language_code,
-                  )
-                }
-                className="absolute top-0 right-2 bottom-0 z-90 my-auto h-fit cursor-pointer rounded-md border border-slate-200 bg-white p-2 text-black shadow-xs transition group-hover:opacity-100 hover:border-slate-400 focus-visible:opacity-100 lg:opacity-0"
-              >
-                <BookOpenTextIcon size={16} />
-              </button>
-            </Tooltip>
-          </div>
+          <>
+            <div className="flex w-full items-center justify-between gap-2 py-2">
+              {params.value}
+              <Tooltip content="Check Keyword Overview">
+                <button
+                  onClick={(e) =>
+                    handleKWOverviewClick(
+                      e,
+                      params.value,
+                      params.row.location_code,
+                      params.row.language_code,
+                    )
+                  }
+                  className="top-0 right-2 bottom-0 z-90 my-auto h-fit shrink-0 cursor-pointer rounded-md border border-slate-200 bg-white p-2 text-black shadow-xs transition group-hover:opacity-100 hover:border-slate-400 focus-visible:opacity-100 lg:absolute lg:opacity-0"
+                >
+                  <BookOpenTextIcon size={16} />
+                </button>
+              </Tooltip>
+            </div>
+          </>
         ),
       },
       {
