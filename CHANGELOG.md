@@ -1,5 +1,11 @@
 # SEOToolSuite Changelog
 
+## v1.0.2
+
+- Added **Low Top of Page Bid** and **High Top of Page Bid** CPC metrics to the keyword research tool.
+- Minor UI fixes and changes.
+- Update packages.
+
 ## v1.0.0
 
 - Added **data caching** support powered by Upstash Redis, allowing users to cache DataForSEO results and reduce unnecessary API costs. Caching is available for keyword suggestions and keyword overview data.
