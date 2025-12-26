@@ -60,6 +60,8 @@ type KeywordSuggestionItem = {
   ppc: number;
   ppcLevel: string;
   cpc: number;
+  lowTopPageBid?: number;
+  highTopPageBid?: number;
   monthlySearches: {
     year: number;
     month: number;
@@ -331,7 +333,7 @@ const KeywordResearchTool = () => {
         type: "number",
         display: "flex",
         flex: 1,
-        minWidth: 80,
+        minWidth: 105,
         align: "left",
         headerAlign: "left",
         renderCell: (params) => (
@@ -339,7 +341,43 @@ const KeywordResearchTool = () => {
             {typeof params.value !== "number" ? (
               <div>N/A</div>
             ) : (
-              <div>${params.value}</div>
+              <div className="flex w-full flex-col gap-1 py-2">
+                <div>${params.value}</div>
+                {(typeof params.row.lowTopPageBid === "number" ||
+                  typeof params.row.highTopPageBid === "number") && (
+                  <div className="text-xs text-black/80">
+                    <Tooltip
+                      content={
+                        <div className="flex flex-col gap-1 p-1">
+                          <div className="font-medium">Low Top of Page Bid</div>
+                          <div className="max-w-70 text-sm">
+                            Minimum bid for the ad to be displayed at the top of
+                            the first page.
+                          </div>
+                        </div>
+                      }
+                    >
+                      <span>${params.row.lowTopPageBid ?? "N/A"}</span>
+                    </Tooltip>{" "}
+                    -{" "}
+                    <Tooltip
+                      content={
+                        <div className="flex flex-col gap-1 p-1">
+                          <div className="font-medium">
+                            High Top of Page Bid
+                          </div>
+                          <div className="max-w-70 text-sm">
+                            Maximum bid for the ad to be displayed at the top of
+                            the first page.
+                          </div>
+                        </div>
+                      }
+                    >
+                      <span>${params.row.highTopPageBid ?? "N/A"}</span>
+                    </Tooltip>
+                  </div>
+                )}
+              </div>
             )}
           </>
         ),
@@ -491,6 +529,10 @@ const KeywordResearchTool = () => {
               ppc: keywordSuggestionItem.keyword_info.competition,
               ppcLevel: keywordSuggestionItem.keyword_info.competition_level,
               cpc: keywordSuggestionItem.keyword_info.cpc,
+              lowTopPageBid:
+                keywordSuggestionItem.keyword_info.low_top_of_page_bid ?? null,
+              highTopPageBid:
+                keywordSuggestionItem.keyword_info.high_top_of_page_bid ?? null,
               monthlySearches:
                 keywordSuggestionItem.keyword_info.monthly_searches,
               searchVolumeTrend:

@@ -61,6 +61,8 @@ type KeywordOverviewItem = {
   ppc: number;
   ppcLevel: string;
   cpc: number;
+  lowTopPageBid?: number;
+  highTopPageBid?: number;
   monthlySearches: {
     year: number;
     month: number;
@@ -188,6 +190,10 @@ const KeywordOverview = ({
             ppc: keywordOverviewItem.keyword_info.competition,
             ppcLevel: keywordOverviewItem.keyword_info.competition_level,
             cpc: keywordOverviewItem.keyword_info.cpc,
+            lowTopPageBid:
+              keywordOverviewItem.keyword_info.low_top_of_page_bid ?? null,
+            highTopPageBid:
+              keywordOverviewItem.keyword_info.high_top_of_page_bid ?? null,
             monthlySearches: keywordOverviewItem.keyword_info.monthly_searches,
             searchVolumeTrend:
               keywordOverviewItem.keyword_info?.search_volume_trend ?? null,
@@ -395,8 +401,45 @@ const KeywordOverview = ({
                 <BadgeDollarSignIcon size={18} />
                 CPC
               </div>
-              <div className="mt-4 text-xl lg:text-3xl">
-                {typeof data.cpc === "number" ? `$${data.cpc}` : "N/A"}
+              <div className="mt-4 flex flex-wrap items-center gap-1">
+                <div className="text-xl lg:text-3xl">
+                  {typeof data.cpc === "number" ? `$${data.cpc}` : "N/A"}
+                </div>
+                {(typeof data.lowTopPageBid === "number" ||
+                  typeof data.highTopPageBid === "number") && (
+                  <div className="text-base text-black/80">
+                    |{" "}
+                    <Tooltip
+                      content={
+                        <div className="flex flex-col gap-1 p-1">
+                          <div className="font-medium">Low Top of Page Bid</div>
+                          <div className="max-w-70 text-sm">
+                            Minimum bid for the ad to be displayed at the top of
+                            the first page.
+                          </div>
+                        </div>
+                      }
+                    >
+                      <span>${data.lowTopPageBid ?? "N/A"}</span>
+                    </Tooltip>{" "}
+                    -{" "}
+                    <Tooltip
+                      content={
+                        <div className="flex flex-col gap-1 p-1">
+                          <div className="font-medium">
+                            High of Top Page Bid
+                          </div>
+                          <div className="max-w-70 text-sm">
+                            Maximum bid for the ad to be displayed at the top of
+                            the first page.
+                          </div>
+                        </div>
+                      }
+                    >
+                      <span>${data.highTopPageBid ?? "N/A"}</span>
+                    </Tooltip>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-col justify-between border-b-2 border-slate-200 p-4 lg:border-r-2 lg:border-b-0">

@@ -38,6 +38,8 @@ type KeywordSuggestionItem = {
   ppc: number;
   ppcLevel: string;
   cpc: number;
+  lowTopPageBid?: number;
+  highTopPageBid?: number;
   monthlySearches: {
     year: number;
     month: number;
@@ -271,10 +273,43 @@ const KeywordDetails = ({
             <BadgeDollarSignIcon size={20} />
             <span className="text-base">CPC</span>
           </div>
-          <div className="overflow-auto p-4">
+          <div className="flex flex-wrap items-center gap-1 overflow-auto p-4">
             {typeof keywordData.cpc === "number"
               ? `$${keywordData.cpc}`
               : "N/A"}
+            {(typeof keywordData.lowTopPageBid === "number" ||
+              typeof keywordData.highTopPageBid === "number") && (
+              <div className="text-xs text-black/80">
+                |{" "}
+                <Tooltip
+                  content={
+                    <div className="flex flex-col gap-1 p-1">
+                      <div className="font-medium">Low Top of Page Bid</div>
+                      <div className="max-w-70 text-sm">
+                        Minimum bid for the ad to be displayed at the top of the
+                        first page.
+                      </div>
+                    </div>
+                  }
+                >
+                  <span>${keywordData.lowTopPageBid ?? "N/A"}</span>
+                </Tooltip>{" "}
+                -{" "}
+                <Tooltip
+                  content={
+                    <div className="flex flex-col gap-1 p-1">
+                      <div className="font-medium">High of Top Page Bid</div>
+                      <div className="max-w-70 text-sm">
+                        Maximum bid for the ad to be displayed at the top of the
+                        first page.
+                      </div>
+                    </div>
+                  }
+                >
+                  <span>${keywordData.highTopPageBid ?? "N/A"}</span>
+                </Tooltip>
+              </div>
+            )}
           </div>
         </div>
         <div className="w-full rounded-md border-2 border-slate-200 bg-white">
