@@ -163,7 +163,7 @@ const KeywordDetails = ({
             <TrendingUp size={20} />
             <span className="text-base">Volume</span>
           </div>
-          <div className="flex items-center gap-2 overflow-auto p-4">
+          <div className="flex items-center gap-1 overflow-auto p-4">
             {typeof keywordData.searchVolume === "number" ? (
               <span className="min-h-[26px]">
                 {keywordData.searchVolume.toLocaleString(navigator.language)}
@@ -174,7 +174,7 @@ const KeywordDetails = ({
             {keywordData.searchVolumeTrend.yearly ? (
               <Tooltip content="Search Volume Trend (Yearly)">
                 <span
-                  className={`rounded-md border px-2 py-1 text-xs font-medium ${keywordData.searchVolumeTrend.yearly > 0 ? "border-green-200 bg-green-50 text-green-500" : "border-red-200 bg-red-50 text-red-500"}`}
+                  className={`text-xs font-medium ${keywordData.searchVolumeTrend.yearly > 0 ? "text-green-500" : "text-red-500"}`}
                 >
                   {keywordData.searchVolumeTrend.yearly > 0 ? "+" : ""}
                   {keywordData.searchVolumeTrend.yearly.toLocaleString(
