@@ -1,5 +1,9 @@
 # SEOToolSuite Changelog
 
+## v1.0.3
+
+- Fix **highTopPageBid** metric tooltip typo.
+
 ## v1.0.2
 
 - Added **Low Top of Page Bid** and **High Top of Page Bid** CPC metrics to the keyword research tool.
