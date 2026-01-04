@@ -1,5 +1,12 @@
 # SEOToolSuite Changelog
 
+## v1.0.4
+
+- Minor UI improvements and fixes.
+- Update styling of KD (SEO Difficulty) column in DataGrid.
+- Homepage UI changes.
+- Update packages.
+
 ## v1.0.3
 
 - Fix **highTopPageBid** metric tooltip typo.
