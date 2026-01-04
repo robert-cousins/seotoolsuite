@@ -191,8 +191,8 @@ export default function HomePage() {
       </section>
       <section className="w-full border-b-2 border-slate-200 bg-white py-10">
         <div className="mx-auto flex w-full max-w-[1432px] flex-col items-start px-4">
-          <div className="flex w-full flex-col items-start justify-between gap-4 lg:flex-row lg:gap-0">
-            <div className="lg:pt-8">
+          <div className="flex w-full flex-col items-start justify-between gap-8 lg:flex-row lg:gap-0">
+            <div className="order-2 lg:order-1 lg:pt-8">
               <h2 className="flex items-center gap-3 text-xl font-semibold text-sky-950 lg:text-4xl">
                 <TelescopeIcon
                   size={52}
@@ -251,12 +251,30 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
-            <div className="group relative mt-4 max-h-[200px] max-w-[800px] overflow-hidden rounded-md border-2 border-sky-950/10 bg-sky-950/5 p-4 lg:max-h-[400px]">
+            <div className="group relative order-1 mt-4 max-h-[200px] max-w-[800px] overflow-hidden rounded-md border-2 border-sky-950/10 bg-sky-950/5 p-4 lg:order-2 lg:max-h-[400px]">
               <Image
                 src={keywordResearchScreenshot}
                 alt="Keyword Research"
-                className="w-full rounded-md transition duration-1500 ease-linear group-hover:translate-y-[calc(-100%+168px)] lg:group-hover:translate-y-[calc(-100%+368px)]"
+                className="w-full rounded-md transition duration-1500 ease-linear group-hover:translate-y-[calc(-100%+168px)] group-[:has(.tool-card-arrow:focus)]:translate-y-[calc(-100%+168px)] lg:group-hover:translate-y-[calc(-100%+368px)] lg:group-[:has(.tool-card-arrow:focus)]:translate-y-[calc(-100%+368px)]"
               />
+              <div className="absolute bottom-0 left-0 z-20 flex h-[50px] w-full items-end justify-center bg-linear-to-t from-black/20 to-transparent pb-1 text-black transition-all duration-300 group-hover:opacity-0 has-[.tool-card-arrow:focus]:opacity-0 lg:pb-2">
+                <button className="tool-card-arrow flex h-8 w-8 scale-80 animate-bounce items-center justify-center rounded-full bg-white text-black md:scale-100">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-chevron-down-icon lucide-chevron-down"
+                  >
+                    <path d="m6 9 6 6 6-6"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
