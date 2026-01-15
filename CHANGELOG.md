@@ -1,5 +1,12 @@
 # SEOToolSuite Changelog
 
+## v2.1.0
+
+- Added **Tools** page. A central page which lists all available tools.
+- Update **HeroUI** theme for UI consistency.
+- Fix Umami tracking for Keyword Complete tool.
+- Update packages.
+
 ## v2.0.0
 
 - Added **Keyword Complete** tool. Generate long-tail keywords for free using Google autocomplete.
