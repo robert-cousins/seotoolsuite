@@ -200,7 +200,12 @@ const KeywordCompleteTool = () => {
   }, []);
 
   const getKeywordCompleteSuggestions = useCallback(
-    async (keyword: string, locationCode: string, languageCode: string) => {
+    async (
+      keyword: string,
+      locationCode: string,
+      languageCode: string,
+      locationName?: string,
+    ) => {
       setIsLoading(true);
       setKeywordModifiersDone(0);
       setKeywordSuggestionsFound(0);
@@ -211,7 +216,7 @@ const KeywordCompleteTool = () => {
 
       try {
         trackUmamiEvent("keyword-complete", {
-          location: locationCode,
+          location: locationName || "N/A",
         });
       } catch (error) {
         console.error(error);
@@ -307,6 +312,8 @@ const KeywordCompleteTool = () => {
         getDataForSEOLocationFromCode(Number(formInputData.location_code))
           ?.country_iso_code || "in",
         formInputData.language_code,
+        getDataForSEOLocationFromCode(Number(formInputData.location_code))
+          ?.location_name,
       );
     }
   }, [formInputData, getKeywordCompleteSuggestions]);
