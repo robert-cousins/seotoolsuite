@@ -1,26 +1,28 @@
 import dfsBalanceAtom from "@/atoms/dfsBalanceAtom";
 import DataForSEO from "@/services/DataForSEO";
-import { getLocalStorageItem } from "@/utils/localStorage";
+import useDFSCredentials from "@/hooks/useDFSCredentials";
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 
 export default function useDFSBalance(refreshBalance: boolean = false) {
   const [currentDFSBalance, setDFSBalance] = useAtom(dfsBalanceAtom);
+  const { credentials } = useDFSCredentials();
 
   const refreshDFSBalance = useCallback(async () => {
-    const dfsUsername = getLocalStorageItem("DATAFORSEO_USERNAME");
-    const dfsPassword = getLocalStorageItem("DATAFORSEO_PASSWORD");
+    if (!credentials?.username || !credentials?.password) return;
 
-    if (!dfsUsername || !dfsPassword) return;
-    const DataForSEOService = new DataForSEO(dfsUsername, dfsPassword);
+    const DataForSEOService = new DataForSEO(
+      credentials.username,
+      credentials.password,
+    );
     const dfsBalance = await DataForSEOService.getAccountBalance();
 
     if (typeof dfsBalance === "number") setDFSBalance(dfsBalance);
-  }, [setDFSBalance]);
+  }, [credentials, setDFSBalance]);
 
   useEffect(() => {
-    if (refreshBalance) refreshDFSBalance();
-  }, [refreshDFSBalance, refreshBalance]);
+    if (refreshBalance && credentials) refreshDFSBalance();
+  }, [refreshDFSBalance, refreshBalance, credentials]);
 
   return { currentDFSBalance, refreshDFSBalance };
 }

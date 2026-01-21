@@ -26,9 +26,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import useDFSBalance from "@/hooks/useDFSBalance";
+import useDFSCredentials from "@/hooks/useDFSCredentials";
 
 function SettingsComponent() {
   const { refreshDFSBalance } = useDFSBalance(false);
+  const { credentials: dfsCredentials } = useDFSCredentials();
+  const isEnvConfigured = dfsCredentials?.source === "environment";
   const [dfsSandboxEnabled, setDFSSandboxEnabled] = useState<boolean>(false);
   const [cachingEnabled, setCachingEnabled] = useState<boolean>(false);
   const [cachingDuration, setCachingDuration] = useState<number>(30);
@@ -156,10 +159,22 @@ function SettingsComponent() {
                     <LifeBuoyIcon size={20} />
                   </button>
                 </Tooltip>
-                <Tooltip content="Your credentials are stored securely on your browser.">
-                  <div className="flex items-center gap-1 rounded-md border border-green-500 bg-green-50 px-2 py-1 font-medium text-green-600">
+                <Tooltip
+                  content={
+                    isEnvConfigured
+                      ? "Credentials loaded from server environment variables."
+                      : "Your credentials are stored securely on your browser."
+                  }
+                >
+                  <div
+                    className={`flex items-center gap-1 rounded-md border px-2 py-1 font-medium ${
+                      isEnvConfigured
+                        ? "border-blue-500 bg-blue-50 text-blue-600"
+                        : "border-green-500 bg-green-50 text-green-600"
+                    }`}
+                  >
                     <LockIcon size={16} />
-                    Secured
+                    {isEnvConfigured ? "Environment" : "Secured"}
                   </div>
                 </Tooltip>
               </div>
@@ -216,48 +231,64 @@ function SettingsComponent() {
                 </span>
               </div>
             </div>
-            <Form
-              onSubmit={handleDFSCredentialsFormSubmit}
-              id="dataforseo-credentials"
-              className="flex flex-col gap-2"
-            >
-              <div className="flex w-full flex-col gap-2 md:flex-row">
-                <Input
-                  name="dfs-username"
-                  variant="flat"
-                  type="text"
-                  label="API Login"
-                  placeholder="test@example.com"
-                  defaultValue={
-                    getLocalStorageItem("DATAFORSEO_USERNAME") ?? ""
-                  }
-                  isRequired
-                />
-                <Input
-                  name="dfs-password"
-                  variant="flat"
-                  type="password"
-                  label="API Password"
-                  defaultValue={
-                    getLocalStorageItem("DATAFORSEO_PASSWORD") ?? ""
-                  }
-                  placeholder="********"
-                  isRequired
-                />
+            {isEnvConfigured ? (
+              <div className="rounded-md border-2 border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <LockIcon size={18} />
+                  <span className="font-medium">
+                    Credentials loaded from environment variables
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-blue-600">
+                  Using DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD from server
+                  configuration. To use different credentials, update your
+                  environment variables.
+                </p>
               </div>
-              <Button
-                color="primary"
-                variant="flat"
-                type="submit"
-                size="lg"
-                disabled={isDFSCredentialsFormLoading}
-                isLoading={isDFSCredentialsFormLoading}
-                className="mt-2 w-full shrink-0"
+            ) : (
+              <Form
+                onSubmit={handleDFSCredentialsFormSubmit}
+                id="dataforseo-credentials"
+                className="flex flex-col gap-2"
               >
-                Save
-              </Button>
-            </Form>
-            <div className="mt-4">
+                <div className="flex w-full flex-col gap-2 md:flex-row">
+                  <Input
+                    name="dfs-username"
+                    variant="flat"
+                    type="text"
+                    label="API Login"
+                    placeholder="test@example.com"
+                    defaultValue={
+                      getLocalStorageItem("DATAFORSEO_USERNAME") ?? ""
+                    }
+                    isRequired
+                  />
+                  <Input
+                    name="dfs-password"
+                    variant="flat"
+                    type="password"
+                    label="API Password"
+                    defaultValue={
+                      getLocalStorageItem("DATAFORSEO_PASSWORD") ?? ""
+                    }
+                    placeholder="********"
+                    isRequired
+                  />
+                </div>
+                <Button
+                  color="primary"
+                  variant="flat"
+                  type="submit"
+                  size="lg"
+                  disabled={isDFSCredentialsFormLoading}
+                  isLoading={isDFSCredentialsFormLoading}
+                  className="mt-2 w-full shrink-0"
+                >
+                  Save
+                </Button>
+              </Form>
+            )}
+            <div className={`mt-4 ${isEnvConfigured ? "hidden" : ""}`}>
               Don&apos;t have an account?{" "}
               <Link
                 href="https://app.dataforseo.com/?aff=44560"

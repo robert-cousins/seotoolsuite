@@ -57,24 +57,24 @@ type KeywordOverviewItem = {
   keyword: string;
   location_code: number;
   language_code: string;
-  searchVolume: number;
-  ppc: number;
-  ppcLevel: string;
-  cpc: number;
-  lowTopPageBid?: number;
-  highTopPageBid?: number;
+  searchVolume: number | null;
+  ppc: number | null;
+  ppcLevel: string | null;
+  cpc: number | null;
+  lowTopPageBid?: number | null;
+  highTopPageBid?: number | null;
   monthlySearches: {
     year: number;
     month: number;
     search_volume: number;
-  }[];
+  }[] | null;
   searchVolumeTrend: {
     monthly: number;
     quarterly: number;
     yearly: number;
-  };
-  searchIntent?: string;
-  keywordDifficulty?: number;
+  } | null;
+  searchIntent?: string | null;
+  keywordDifficulty?: number | null;
   avgBacklinksData?: {
     backlinks: number;
     dofollowBacklinks: number;
@@ -303,7 +303,9 @@ const KeywordOverview = ({
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-1">
                 <span className="text-xl lg:text-3xl">
-                  {data.searchVolume.toLocaleString(navigator.language)}
+                  {typeof data.searchVolume === "number"
+                    ? data.searchVolume.toLocaleString(navigator.language)
+                    : "N/A"}
                 </span>
                 {data.searchVolumeTrend?.yearly ? (
                   <span
@@ -536,7 +538,7 @@ const KeywordOverview = ({
                           <div className="font-medium">Male</div>
                           <div className="max-w-60 text-sm">
                             {Math.round(
-                              data.searchVolume *
+                              (data.searchVolume ?? 0) *
                                 (data.genderDistribution.male / 100),
                             ).toLocaleString(navigator.language)}{" "}
                             ({data.genderDistribution.male ?? 0}%)
@@ -546,7 +548,7 @@ const KeywordOverview = ({
                           <div className="font-medium">Female</div>
                           <div className="max-w-60 text-sm">
                             {Math.round(
-                              data.searchVolume *
+                              (data.searchVolume ?? 0) *
                                 (data.genderDistribution.female / 100),
                             ).toLocaleString(navigator.language)}{" "}
                             ({data.genderDistribution.female ?? 0}%)
@@ -573,7 +575,7 @@ const KeywordOverview = ({
                       <div className="font-medium">Male</div>
                       <div className="max-w-60 text-sm">
                         {Math.round(
-                          data.searchVolume *
+                          (data.searchVolume ?? 0) *
                             (data.genderDistribution.male / 100),
                         ).toLocaleString(navigator.language)}{" "}
                         ({data.genderDistribution.male ?? 0}%)
@@ -583,7 +585,7 @@ const KeywordOverview = ({
                       <div className="font-medium">Female</div>
                       <div className="max-w-60 text-right text-sm">
                         {Math.round(
-                          data.searchVolume *
+                          (data.searchVolume ?? 0) *
                             (data.genderDistribution.female / 100),
                         ).toLocaleString(navigator.language)}{" "}
                         ({data.genderDistribution.female ?? 0}%)
