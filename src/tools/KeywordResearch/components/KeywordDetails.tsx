@@ -173,7 +173,7 @@ const KeywordDetails = ({
             ) : (
               <span>N/A</span>
             )}
-            {keywordData.searchVolumeTrend.yearly ? (
+            {keywordData.searchVolumeTrend?.yearly ? (
               <Tooltip content="Search Volume Trend (Yearly)">
                 <span
                   className={`text-xs font-medium ${keywordData.searchVolumeTrend.yearly > 0 ? "text-green-500" : "text-red-500"}`}
@@ -279,37 +279,37 @@ const KeywordDetails = ({
               : "N/A"}
             {(typeof keywordData.lowTopPageBid === "number" ||
               typeof keywordData.highTopPageBid === "number") && (
-              <div className="text-xs text-black/80">
-                |{" "}
-                <Tooltip
-                  content={
-                    <div className="flex flex-col gap-1 p-1">
-                      <div className="font-medium">Low Top of Page Bid</div>
-                      <div className="max-w-70 text-sm">
-                        Minimum bid for the ad to be displayed at the top of the
-                        first page.
+                <div className="text-xs text-black/80">
+                  |{" "}
+                  <Tooltip
+                    content={
+                      <div className="flex flex-col gap-1 p-1">
+                        <div className="font-medium">Low Top of Page Bid</div>
+                        <div className="max-w-70 text-sm">
+                          Minimum bid for the ad to be displayed at the top of the
+                          first page.
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <span>${keywordData.lowTopPageBid ?? "N/A"}</span>
-                </Tooltip>{" "}
-                -{" "}
-                <Tooltip
-                  content={
-                    <div className="flex flex-col gap-1 p-1">
-                      <div className="font-medium">High Top of Page Bid</div>
-                      <div className="max-w-70 text-sm">
-                        Maximum bid for the ad to be displayed at the top of the
-                        first page.
+                    }
+                  >
+                    <span>${keywordData.lowTopPageBid ?? "N/A"}</span>
+                  </Tooltip>{" "}
+                  -{" "}
+                  <Tooltip
+                    content={
+                      <div className="flex flex-col gap-1 p-1">
+                        <div className="font-medium">High Top of Page Bid</div>
+                        <div className="max-w-70 text-sm">
+                          Maximum bid for the ad to be displayed at the top of the
+                          first page.
+                        </div>
                       </div>
-                    </div>
-                  }
-                >
-                  <span>${keywordData.highTopPageBid ?? "N/A"}</span>
-                </Tooltip>
-              </div>
-            )}
+                    }
+                  >
+                    <span>${keywordData.highTopPageBid ?? "N/A"}</span>
+                  </Tooltip>
+                </div>
+              )}
           </div>
         </div>
         <div className="w-full rounded-md border-2 border-slate-200 bg-white">
@@ -408,50 +408,50 @@ const KeywordDetails = ({
               Avg. Backlinks:{" "}
               {keywordData.avgBacklinksData.backlinks
                 ? Math.round(
-                    keywordData.avgBacklinksData.backlinks,
-                  ).toLocaleString(navigator.language)
+                  keywordData.avgBacklinksData.backlinks,
+                ).toLocaleString(navigator.language)
                 : "N/A"}
             </div>
             <div>
               Avg. DoFollow Backlinks:{" "}
               {keywordData.avgBacklinksData.dofollowBacklinks
                 ? Math.round(
-                    keywordData.avgBacklinksData.dofollowBacklinks,
-                  ).toLocaleString(navigator.language)
+                  keywordData.avgBacklinksData.dofollowBacklinks,
+                ).toLocaleString(navigator.language)
                 : "N/A"}
             </div>
             <div>
               Avg. Referring Pages:{" "}
               {keywordData.avgBacklinksData.referringPages
                 ? Math.round(
-                    keywordData.avgBacklinksData.referringPages,
-                  ).toLocaleString(navigator.language)
+                  keywordData.avgBacklinksData.referringPages,
+                ).toLocaleString(navigator.language)
                 : "N/A"}
             </div>
             <div>
               Avg. Referring Domains:{" "}
               {keywordData.avgBacklinksData.referringDomains
                 ? Math.round(
-                    keywordData.avgBacklinksData.referringDomains,
-                  ).toLocaleString(navigator.language)
+                  keywordData.avgBacklinksData.referringDomains,
+                ).toLocaleString(navigator.language)
                 : "N/A"}
             </div>
             <div>
               Avg. PageRank:{" "}
               {keywordData.avgBacklinksData.pageRank
                 ? Math.round(
-                    Math.sin(keywordData.avgBacklinksData.pageRank / 636.62) *
-                      100,
-                  )
+                  Math.sin(keywordData.avgBacklinksData.pageRank / 636.62) *
+                  100,
+                )
                 : "N/A"}
             </div>
             <div>
               Avg. DomainRank:{" "}
               {keywordData.avgBacklinksData.domainRank
                 ? Math.round(
-                    Math.sin(keywordData.avgBacklinksData.domainRank / 636.62) *
-                      100,
-                  )
+                  Math.sin(keywordData.avgBacklinksData.domainRank / 636.62) *
+                  100,
+                )
                 : "N/A"}
             </div>
           </div>

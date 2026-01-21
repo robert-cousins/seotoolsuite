@@ -46,6 +46,7 @@ import Link from "next/link";
 import DataForSEO from "@/services/DataForSEO";
 import { trackUmamiEvent } from "@/utils/umami";
 import useDFSBalance from "@/hooks/useDFSBalance";
+import useDFSCredentials from "@/hooks/useDFSCredentials";
 import KeywordOverview from "./components/KeywordOverview";
 import KeywordFilters, {
   type KeywordFiltersInitialValues,
@@ -88,6 +89,8 @@ type KeywordSuggestionData = KeywordSuggestionItem[];
 
 const KeywordResearchTool = () => {
   const { refreshDFSBalance } = useDFSBalance(false);
+  const { credentials: dfsCredentials, isLoading: isCredentialsLoading } =
+    useDFSCredentials();
 
   const limit: number = 250;
   const [dfsSandboxEnabled, setDFSSandboxEnabled] = useState<boolean>(false);
@@ -122,8 +125,8 @@ const KeywordResearchTool = () => {
       ? true
       : false;
 
-  const dfsUsername = getLocalStorageItem("DATAFORSEO_USERNAME");
-  const dfsPassword = getLocalStorageItem("DATAFORSEO_PASSWORD");
+  const dfsUsername = dfsCredentials?.username;
+  const dfsPassword = dfsCredentials?.password;
 
   const locations = getDataForSEOLocations();
   const languages = getDataForSEOLanguages();
@@ -324,7 +327,7 @@ const KeywordResearchTool = () => {
             ) : (
               <div className="flex flex-row flex-wrap items-center gap-1 py-2">
                 {params.value.toLocaleString(navigator.language)}
-                {params.row.searchVolumeTrend.yearly ? (
+                {params.row.searchVolumeTrend?.yearly ? (
                   <Tooltip content="Search Volume Trend (Yearly)">
                     <span
                       className={`text-xs ${params.row.searchVolumeTrend.yearly > 0 ? "text-green-500" : "text-red-500"}`}
@@ -348,7 +351,7 @@ const KeywordResearchTool = () => {
         field: "searchVolumeTrendYearly",
         headerName: "Search Volume Trend (Yearly)",
         type: "number",
-        valueGetter: (_value, row) => row.searchVolumeTrend.yearly,
+        valueGetter: (_value, row) => row.searchVolumeTrend?.yearly ?? null,
       },
       {
         field: "cpc",
@@ -369,38 +372,38 @@ const KeywordResearchTool = () => {
                 <div>${params.value}</div>
                 {(typeof params.row.lowTopPageBid === "number" ||
                   typeof params.row.highTopPageBid === "number") && (
-                  <div className="text-xs text-black/80">
-                    <Tooltip
-                      content={
-                        <div className="flex flex-col gap-1 p-1">
-                          <div className="font-medium">Low Top of Page Bid</div>
-                          <div className="max-w-70 text-sm">
-                            Minimum bid for the ad to be displayed at the top of
-                            the first page.
+                    <div className="text-xs text-black/80">
+                      <Tooltip
+                        content={
+                          <div className="flex flex-col gap-1 p-1">
+                            <div className="font-medium">Low Top of Page Bid</div>
+                            <div className="max-w-70 text-sm">
+                              Minimum bid for the ad to be displayed at the top of
+                              the first page.
+                            </div>
                           </div>
-                        </div>
-                      }
-                    >
-                      <span>${params.row.lowTopPageBid ?? "N/A"}</span>
-                    </Tooltip>{" "}
-                    -{" "}
-                    <Tooltip
-                      content={
-                        <div className="flex flex-col gap-1 p-1">
-                          <div className="font-medium">
-                            High Top of Page Bid
+                        }
+                      >
+                        <span>${params.row.lowTopPageBid ?? "N/A"}</span>
+                      </Tooltip>{" "}
+                      -{" "}
+                      <Tooltip
+                        content={
+                          <div className="flex flex-col gap-1 p-1">
+                            <div className="font-medium">
+                              High Top of Page Bid
+                            </div>
+                            <div className="max-w-70 text-sm">
+                              Maximum bid for the ad to be displayed at the top of
+                              the first page.
+                            </div>
                           </div>
-                          <div className="max-w-70 text-sm">
-                            Maximum bid for the ad to be displayed at the top of
-                            the first page.
-                          </div>
-                        </div>
-                      }
-                    >
-                      <span>${params.row.highTopPageBid ?? "N/A"}</span>
-                    </Tooltip>
-                  </div>
-                )}
+                        }
+                      >
+                        <span>${params.row.highTopPageBid ?? "N/A"}</span>
+                      </Tooltip>
+                    </div>
+                  )}
               </div>
             )}
           </>
@@ -679,16 +682,16 @@ const KeywordResearchTool = () => {
         }),
         ...(formData.get("includeKeyword") !== "" &&
           formData.get("includeKeyword") !== null && {
-            includeKeyword: formData.get("includeKeyword") as any,
-          }),
+          includeKeyword: formData.get("includeKeyword") as any,
+        }),
         ...(formData.get("excludeKeyword") !== "" &&
           formData.get("excludeKeyword") !== null && {
-            excludeKeyword: formData.get("excludeKeyword") as any,
-          }),
+          excludeKeyword: formData.get("excludeKeyword") as any,
+        }),
         ...(formData.getAll("searchIntents[]") &&
           formData.getAll("searchIntents[]").length > 0 && {
-            searchIntents: formData.getAll("searchIntents[]") as any,
-          }),
+          searchIntents: formData.getAll("searchIntents[]") as any,
+        }),
       });
     },
     [selectedLocationKey, selectedLanguageKey],
@@ -817,7 +820,11 @@ const KeywordResearchTool = () => {
             <div className="tool-input-sub-heading mt-0 w-full text-center text-lg font-medium text-slate-500 md:text-xl">
               Generate keyword suggestions with multiple metrics.
             </div>
-            {!dfsUsername || !dfsPassword ? (
+            {isCredentialsLoading ? (
+              <div className="mt-8 w-full lg:w-1/2">
+                <div className="h-48 animate-pulse rounded-md border-2 border-slate-200 bg-slate-100" />
+              </div>
+            ) : !dfsUsername || !dfsPassword ? (
               <div className="mt-4 w-full rounded-md border-2 border-slate-200 bg-white p-2 lg:w-1/2">
                 <Alert
                   color="warning"

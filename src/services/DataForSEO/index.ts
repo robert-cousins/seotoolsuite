@@ -258,6 +258,102 @@ class DataForSEO {
       throw error;
     }
   }
+
+  /**
+   * Get keywords for a domain (ranked keywords).
+   */
+  async getKeywordsForDomain(
+    target: string,
+    location_code: number,
+    language_code: string = "en",
+    limit: number = 20,
+    offset: number = 0,
+  ) {
+    if (!this.sandboxEnabled && this.enableCaching && this.upstashRedis) {
+      let cachedData;
+      try {
+        cachedData = await this.upstashRedis.getData(
+          btoa(
+            `keywords-for-domain-${target}-${location_code}-${language_code}-${limit}-${offset}`,
+          ),
+        );
+      } catch (error) {
+        console.error(error);
+      }
+
+      if (cachedData) return JSON.parse(cachedData);
+    }
+
+    try {
+      const normalizedTarget = target.startsWith("http")
+        ? target
+        : `https://${target}/`;
+
+      const requestPayload = [
+        {
+          target: normalizedTarget,
+          location_code,
+          language_code,
+          sort_by: "search_volume",
+          search_partners: false,
+          include_adult_keywords: false,
+        },
+      ];
+
+      console.log("[DataForSEO] Request URL:", `${this.API_BASE_URL}/keywords_data/google_ads/keywords_for_site/live`);
+      console.log("[DataForSEO] Request payload:", JSON.stringify(requestPayload, null, 2));
+
+      const apiResponse = await axios.post(
+        `${this.API_BASE_URL}/keywords_data/google_ads/keywords_for_site/live`,
+        requestPayload,
+        {
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              `${this.USERNAME}:${this.PASSWORD}`,
+            ).toString("base64")}`,
+            "Content-Type": "application/json",
+          },
+          timeout: 60000,
+        },
+      );
+
+      console.log("[DataForSEO] Response status:", apiResponse.status);
+      console.log("[DataForSEO] Response tasks:", JSON.stringify(apiResponse.data?.tasks?.[0] ? {
+        status_code: apiResponse.data.tasks[0].status_code,
+        status_message: apiResponse.data.tasks[0].status_message,
+        result_count: apiResponse.data.tasks[0].result_count,
+        time: apiResponse.data.tasks[0].time,
+      } : "No tasks", null, 2));
+
+      const taskStatusCode = apiResponse?.data?.tasks[0]?.status_code ?? null;
+
+      if (
+        !this.sandboxEnabled &&
+        this.enableCaching &&
+        this.upstashRedis &&
+        taskStatusCode === 20000
+      ) {
+        try {
+          this.upstashRedis.setData(
+            btoa(
+              `keywords-for-domain-${target}-${location_code}-${language_code}-${limit}-${offset}`,
+            ),
+            JSON.stringify(apiResponse.data),
+            60 * 60 * 24 * this.cachingDuration,
+          );
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      return apiResponse.data;
+    } catch (error: any) {
+      console.error("[DataForSEO] API Error:", error.message);
+      console.error("[DataForSEO] Error code:", error.code);
+      console.error("[DataForSEO] Response data:", error.response?.data);
+      throw error;
+    }
+  }
 }
 
 export default DataForSEO;

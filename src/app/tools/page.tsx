@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
-import { LightbulbIcon, TelescopeIcon } from "lucide-react";
+import { GlobeIcon, LightbulbIcon, TelescopeIcon } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -61,6 +61,28 @@ export default function ToolsPage() {
                 </span>
                 <span className="mt-2 text-sm leading-tight text-pretty text-black/60 md:text-base">
                   Generate long-tail keywords using Google autocomplete.
+                </span>
+              </div>
+            </Link>
+            <Link
+              href="/tool/domain-analysis"
+              className={`group flex h-full flex-row items-center rounded-md border-2 border-slate-200 text-lg font-medium transition hover:bg-slate-50`}
+            >
+              <div
+                className={`flex h-full items-center justify-center px-4 md:px-5`}
+              >
+                <GlobeIcon size={32} className="text-black/80 md:hidden" />
+                <GlobeIcon
+                  size={52}
+                  className="hidden text-black/80 md:block"
+                />
+              </div>
+              <div className="flex flex-col py-4 pr-4">
+                <span className="text-xl text-black/80 md:text-2xl">
+                  Domain Analysis
+                </span>
+                <span className="mt-2 text-sm leading-tight text-pretty text-black/60 md:text-base">
+                  Discover top keywords a domain ranks for.
                 </span>
               </div>
             </Link>
