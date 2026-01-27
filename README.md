@@ -19,6 +19,35 @@ Find thousands of keyword suggestions with multiple metrics like search volume, 
 
 Generate hundreds (or even thousands!) of long-tail keywords for free using Google autocomplete. No API needed!
 
+### Robots.txt Analyzer
+
+Fetch and analyze a website's robots.txt file. Returns:
+- Disallowed and allowed paths per user-agent
+- Sitemap URLs
+- Issues (missing, malformed entries, etc.)
+
+**Usage (Module):**
+
+```typescript
+import { RobotsTxt } from "@/services/RobotsTxt";
+
+const robotsTxt = new RobotsTxt();
+const result = await robotsTxt.analyze("example.com");
+
+console.log(result.status);      // "found" | "missing" | "unreachable" | "error"
+console.log(result.userAgents);  // Array of user-agent sections
+console.log(result.sitemaps);    // Array of sitemap URLs
+console.log(result.issues);      // Array of issues found
+```
+
+**Usage (API):**
+
+```bash
+curl -X POST http://localhost:3000/api/robots-txt \
+  -H "Content-Type: application/json" \
+  -d '{"domain": "example.com"}'
+```
+
 ## 📋 Prerequisites
 
 - [DataForSEO API](https://dataforseo.com/?aff=44560) (for tools using DataForSEO APIs)
