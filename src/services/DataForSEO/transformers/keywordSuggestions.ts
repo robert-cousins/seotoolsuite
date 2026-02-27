@@ -2,39 +2,9 @@ import type {
   TransformedKeywordSuggestion,
   TransformResult,
   MonthlySearch,
-  SearchVolumeTrend,
   BacklinksData,
 } from "./types";
-
-/**
- * Calculates search volume trend percentages from monthly search data.
- */
-function calculateTrend(monthlySearches: MonthlySearch[]): SearchVolumeTrend {
-  if (!monthlySearches || monthlySearches.length === 0) {
-    return { monthly: 0, quarterly: 0, yearly: 0 };
-  }
-
-  const sorted = [...monthlySearches].sort((a, b) => {
-    if (a.year !== b.year) return b.year - a.year;
-    return b.month - a.month;
-  });
-
-  const current = sorted[0]?.search_volume ?? 0;
-  const lastMonth = sorted[1]?.search_volume ?? current;
-  const threeMonthsAgo = sorted[3]?.search_volume ?? current;
-  const twelveMonthsAgo = sorted[11]?.search_volume ?? current;
-
-  const calcChange = (prev: number, curr: number): number => {
-    if (prev === 0) return curr > 0 ? 100 : 0;
-    return Math.round(((curr - prev) / prev) * 100);
-  };
-
-  return {
-    monthly: calcChange(lastMonth, current),
-    quarterly: calcChange(threeMonthsAgo, current),
-    yearly: calcChange(twelveMonthsAgo, current),
-  };
-}
+import { calculateTrend } from "../types";
 
 /**
  * Transforms a single raw keyword item to the UI format.

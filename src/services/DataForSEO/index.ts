@@ -10,62 +10,44 @@ import {
   type TransformedKeywordOverview,
   type TransformedDomainKeyword,
 } from "./transformers";
+import { createConfig, type DataForSEOConfig } from "./config";
+import { RateLimiter } from "./rate-limiter";
+import { MetricsTracker, type ApiMetrics } from "./metrics";
+import { withRetry } from "./retry";
+import { classifyError, RateLimitError } from "./errors";
 
 /**
  * DataForSEO service.
  */
 class DataForSEO {
-  /**
-   * DataForSEO API URL.
-   */
   private API_BASE_URL: string;
-
-  /**
-   * DataForSEO API username.
-   */
-  private USERNAME: string;
-
-  /**
-   * DataForSEO API password.
-   */
-  private PASSWORD: string;
-
-  /**
-   * Sandbox mode.
-   */
+  private config: DataForSEOConfig;
+  private authHeader: string;
   private sandboxEnabled: boolean;
-
-  /**
-   * Enable caching.
-   */
   private enableCaching: boolean;
-
-  /**
-   * Caching duration (in days).
-   */
   private cachingDuration: number;
-
-  /**
-   * Upstash Redis instance.
-   */
   private upstashRedis?: UpstashRedis;
+  private rateLimiter: RateLimiter;
+  private metrics: MetricsTracker;
 
-  /**
-   * Constructor.
-   * @param isSandbox - Whether to use the sandbox version of the API.
-   */
   constructor(
     username: string,
     password: string,
     isSandbox: boolean = false,
     enableCaching: boolean = false,
   ) {
+    this.config = createConfig({
+      username,
+      password,
+      isSandbox,
+      enableCaching,
+    });
+
     this.API_BASE_URL = isSandbox
       ? "https://sandbox.dataforseo.com/v3"
       : "https://api.dataforseo.com/v3";
 
-    this.USERNAME = username;
-    this.PASSWORD = password;
+    this.authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
     this.sandboxEnabled = isSandbox;
     this.enableCaching = enableCaching;
     this.cachingDuration = Number(
@@ -75,61 +57,116 @@ class DataForSEO {
     if (!this.sandboxEnabled && enableCaching) {
       this.upstashRedis = new UpstashRedis();
     }
+
+    this.rateLimiter = new RateLimiter(this.config.rateLimitPerMinute);
+    this.metrics = new MetricsTracker();
+  }
+
+  private async request<T>(
+    method: "get" | "post",
+    path: string,
+    data?: unknown,
+  ): Promise<T> {
+    const rateCheck = this.rateLimiter.canProceed();
+    if (!rateCheck.allowed) {
+      this.metrics.recordRateLimitHit();
+      this.rateLimiter.recordRateLimitHit();
+      throw new RateLimitError(
+        "Rate limit exceeded",
+        429,
+        rateCheck.retryAfterMs!,
+      );
+    }
+
+    const start = Date.now();
+    try {
+      const response =
+        method === "get"
+          ? await axios.get<T>(`${this.API_BASE_URL}${path}`, {
+              headers: { Authorization: this.authHeader },
+              timeout: this.config.timeout,
+            })
+          : await axios.post<T>(`${this.API_BASE_URL}${path}`, data, {
+              headers: { Authorization: this.authHeader },
+              timeout: this.config.timeout,
+            });
+
+      const duration = Date.now() - start;
+      const cost = (response.data as Record<string, unknown>)?.cost as number ?? 0;
+      this.metrics.recordRequest(duration, cost, true);
+      this.rateLimiter.recordSuccess();
+      return response.data;
+    } catch (error) {
+      const duration = Date.now() - start;
+      this.metrics.recordRequest(duration, 0, false);
+      throw classifyError(error);
+    }
+  }
+
+  private async withCache<T>(
+    cacheKey: string,
+    fn: () => Promise<T>,
+    shouldCache: (result: T) => boolean = () => true,
+  ): Promise<T> {
+    if (!this.sandboxEnabled && this.enableCaching && this.upstashRedis) {
+      try {
+        const cached = await this.upstashRedis.getData(cacheKey);
+        if (cached) return JSON.parse(cached) as T;
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    const result = await fn();
+
+    if (
+      !this.sandboxEnabled &&
+      this.enableCaching &&
+      this.upstashRedis &&
+      shouldCache(result)
+    ) {
+      try {
+        this.upstashRedis.setData(
+          cacheKey,
+          JSON.stringify(result),
+          60 * 60 * 24 * this.cachingDuration,
+        );
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Get session API metrics.
+   */
+  getMetrics(): ApiMetrics {
+    return this.metrics.getMetrics();
   }
 
   /**
    * Get user data.
    */
   async getUserData() {
-    try {
-      const apiResponse = await axios.get(
-        `${this.API_BASE_URL}/appendix/user_data`,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${this.USERNAME}:${this.PASSWORD}`,
-            ).toString("base64")}`,
-          },
-        },
-      );
-
-      console.log("[DataForSEO] getUserData response:", {
-        status: apiResponse.status,
-        tasks_count: apiResponse.data?.tasks?.length ?? 0,
-      });
-
-      return apiResponse.data;
-    } catch (error) {
-      throw error;
-    }
+    return withRetry(
+      () => this.request("get", "/appendix/user_data"),
+      { maxRetries: this.config.maxRetries },
+    );
   }
 
   /**
    * Get account balance.
    */
   async getAccountBalance(): Promise<number | null> {
-    try {
-      const apiResponse = await axios.get(
-        `${this.API_BASE_URL}/appendix/user_data`,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${this.USERNAME}:${this.PASSWORD}`,
-            ).toString("base64")}`,
-          },
-        },
-      );
+    const data: any = await withRetry(
+      () => this.request("get", "/appendix/user_data"),
+      { maxRetries: this.config.maxRetries },
+    );
 
-      const balance = apiResponse.data?.tasks[0]?.result?.[0]?.money?.balance ?? null;
-      console.log("[DataForSEO] getAccountBalance response:", {
-        status: apiResponse.status,
-        balance,
-      });
-
-      return balance;
-    } catch (error) {
-      throw error;
-    }
+    const balance = data?.tasks?.[0]?.result?.[0]?.money?.balance ?? null;
+    return balance as number | null;
   }
 
   /**
@@ -140,7 +177,7 @@ class DataForSEO {
     keyword: string,
     location_code: number,
     language_code: string = "any",
-    filters: Array<any> = [],
+    filters: Array<unknown> = [],
     limit: number = 50,
     offset: number = 0,
   ): Promise<TransformResult<TransformedKeywordSuggestion[]>> {
@@ -148,71 +185,41 @@ class DataForSEO {
       `keyword-suggestions-v2-${keyword}-${location_code}-${language_code}-${JSON.stringify(filters)}-${limit}-${offset}`,
     );
 
-    if (!this.sandboxEnabled && this.enableCaching && this.upstashRedis) {
-      let cachedData;
-      try {
-        cachedData = await this.upstashRedis.getData(cacheKey);
-      } catch (error) {
-        console.error(error);
-      }
+    return this.withCache(
+      cacheKey,
+      async () => {
+        const apiData = await withRetry(
+          () =>
+            this.request<Record<string, unknown>>(
+              "post",
+              "/dataforseo_labs/google/keyword_suggestions/live",
+              [
+                {
+                  keyword,
+                  location_code,
+                  ...(language_code !== "any" ? { language_code } : {}),
+                  ...(filters && filters.length > 0 ? { filters } : {}),
+                  limit,
+                  offset,
+                  order_by: ["keyword_info.search_volume,desc"],
+                },
+              ],
+            ),
+          { maxRetries: this.config.maxRetries },
+        );
 
-      if (cachedData) return JSON.parse(cachedData);
-    }
+        const transformed = transformKeywordSuggestions(apiData);
 
-    try {
-      const apiResponse = await axios.post(
-        `${this.API_BASE_URL}/dataforseo_labs/google/keyword_suggestions/live`,
-        [
-          {
-            keyword,
-            location_code,
-            ...(language_code !== "any" ? { language_code } : {}),
-            ...(filters && filters.length > 0 ? { filters } : {}),
-            limit,
-            offset,
-            order_by: ["keyword_info.search_volume,desc"],
-          },
-        ],
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${this.USERNAME}:${this.PASSWORD}`,
-            ).toString("base64")}`,
-          },
-          timeout: 60000,
-        },
-      );
+        console.log("[DataForSEO] getKeywordSuggestions response:", {
+          task_status_code: transformed.statusCode,
+          result_count: transformed.data.length,
+          total_results: transformed.totalResults,
+        });
 
-      const transformed = transformKeywordSuggestions(apiResponse.data);
-
-      console.log("[DataForSEO] getKeywordSuggestions response:", {
-        status: apiResponse.status,
-        task_status_code: transformed.statusCode,
-        result_count: transformed.data.length,
-        total_results: transformed.totalResults,
-      });
-
-      if (
-        !this.sandboxEnabled &&
-        this.enableCaching &&
-        this.upstashRedis &&
-        transformed.statusCode === 20000
-      ) {
-        try {
-          this.upstashRedis.setData(
-            cacheKey,
-            JSON.stringify(transformed),
-            60 * 60 * 24 * this.cachingDuration,
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      return transformed;
-    } catch (error) {
-      throw error;
-    }
+        return transformed;
+      },
+      (result) => result.statusCode === 20000,
+    );
   }
 
   /**
@@ -229,67 +236,37 @@ class DataForSEO {
       `keywords-overview-v2-${JSON.stringify(keywords)}-${location_code}-${language_code}-${includeClickstreamData}`,
     );
 
-    if (!this.sandboxEnabled && this.enableCaching && this.upstashRedis) {
-      let cachedData;
-      try {
-        cachedData = await this.upstashRedis.getData(cacheKey);
-      } catch (error) {
-        console.error(error);
-      }
+    return this.withCache(
+      cacheKey,
+      async () => {
+        const apiData = await withRetry(
+          () =>
+            this.request<Record<string, unknown>>(
+              "post",
+              "/dataforseo_labs/google/keyword_overview/live",
+              [
+                {
+                  keywords,
+                  location_code,
+                  language_code,
+                  include_clickstream_data: includeClickstreamData,
+                },
+              ],
+            ),
+          { maxRetries: this.config.maxRetries },
+        );
 
-      if (cachedData) return JSON.parse(cachedData);
-    }
+        const transformed = transformKeywordOverview(apiData);
 
-    try {
-      const apiResponse = await axios.post(
-        `${this.API_BASE_URL}/dataforseo_labs/google/keyword_overview/live`,
-        [
-          {
-            keywords,
-            location_code,
-            language_code,
-            include_clickstream_data: includeClickstreamData,
-          },
-        ],
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${this.USERNAME}:${this.PASSWORD}`,
-            ).toString("base64")}`,
-          },
-          timeout: 60000,
-        },
-      );
+        console.log("[DataForSEO] getKeywordsOverview response:", {
+          task_status_code: transformed.statusCode,
+          result_count: transformed.data.length,
+        });
 
-      const transformed = transformKeywordOverview(apiResponse.data);
-
-      console.log("[DataForSEO] getKeywordsOverview response:", {
-        status: apiResponse.status,
-        task_status_code: transformed.statusCode,
-        result_count: transformed.data.length,
-      });
-
-      if (
-        !this.sandboxEnabled &&
-        this.enableCaching &&
-        this.upstashRedis &&
-        transformed.statusCode === 20000
-      ) {
-        try {
-          this.upstashRedis.setData(
-            cacheKey,
-            JSON.stringify(transformed),
-            60 * 60 * 24 * this.cachingDuration,
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      return transformed;
-    } catch (error) {
-      throw error;
-    }
+        return transformed;
+      },
+      (result) => result.statusCode === 20000,
+    );
   }
 
   /**
@@ -307,83 +284,44 @@ class DataForSEO {
       `keywords-for-domain-v2-${target}-${location_code}-${language_code}-${limit}-${offset}`,
     );
 
-    if (!this.sandboxEnabled && this.enableCaching && this.upstashRedis) {
-      let cachedData;
-      try {
-        cachedData = await this.upstashRedis.getData(cacheKey);
-      } catch (error) {
-        console.error(error);
-      }
+    return this.withCache(
+      cacheKey,
+      async () => {
+        const normalizedTarget = target.startsWith("http")
+          ? target
+          : `https://${target}/`;
 
-      if (cachedData) return JSON.parse(cachedData);
-    }
+        const apiData = await withRetry(
+          () =>
+            this.request<Record<string, unknown>>(
+              "post",
+              "/keywords_data/google_ads/keywords_for_site/live",
+              [
+                {
+                  target: normalizedTarget,
+                  location_code,
+                  language_code,
+                  sort_by: "search_volume",
+                  search_partners: false,
+                  include_adult_keywords: false,
+                },
+              ],
+            ),
+          { maxRetries: this.config.maxRetries },
+        );
 
-    try {
-      const normalizedTarget = target.startsWith("http")
-        ? target
-        : `https://${target}/`;
+        const transformed = transformDomainKeywords(apiData);
 
-      const requestPayload = [
-        {
-          target: normalizedTarget,
-          location_code,
-          language_code,
-          sort_by: "search_volume",
-          search_partners: false,
-          include_adult_keywords: false,
-        },
-      ];
+        console.log("[DataForSEO] getKeywordsForDomain response:", {
+          task_status_code: transformed.statusCode,
+          result_count: transformed.data.length,
+          total_results: transformed.totalResults,
+        });
 
-      console.log("[DataForSEO] Request URL:", `${this.API_BASE_URL}/keywords_data/google_ads/keywords_for_site/live`);
-
-      const apiResponse = await axios.post(
-        `${this.API_BASE_URL}/keywords_data/google_ads/keywords_for_site/live`,
-        requestPayload,
-        {
-          headers: {
-            Authorization: `Basic ${Buffer.from(
-              `${this.USERNAME}:${this.PASSWORD}`,
-            ).toString("base64")}`,
-            "Content-Type": "application/json",
-          },
-          timeout: 60000,
-        },
-      );
-
-      const transformed = transformDomainKeywords(apiResponse.data);
-
-      console.log("[DataForSEO] getKeywordsForDomain response:", {
-        status: apiResponse.status,
-        task_status_code: transformed.statusCode,
-        result_count: transformed.data.length,
-        total_results: transformed.totalResults,
-      });
-
-      if (
-        !this.sandboxEnabled &&
-        this.enableCaching &&
-        this.upstashRedis &&
-        transformed.statusCode === 20000
-      ) {
-        try {
-          this.upstashRedis.setData(
-            cacheKey,
-            JSON.stringify(transformed),
-            60 * 60 * 24 * this.cachingDuration,
-          );
-        } catch (error) {
-          console.error(error);
-        }
-      }
-
-      return transformed;
-    } catch (error: unknown) {
-      const err = error as { message?: string; code?: string; response?: { data?: unknown } };
-      console.error("[DataForSEO] API Error:", err.message);
-      console.error("[DataForSEO] Error code:", err.code);
-      console.error("[DataForSEO] Response data:", err.response?.data);
-      throw error;
-    }
+        return transformed;
+      },
+      (result) => result.statusCode === 20000,
+    );
   }
 }
 
