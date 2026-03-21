@@ -56,7 +56,7 @@ function SettingsComponent() {
     try {
       setIsDFSCredentialsFormLoading(true);
       const dfsService = new DataForSEO(username, password);
-      const apiResponse = await dfsService.getUserData();
+      const apiResponse: any = await dfsService.getUserData();
       const availableBalance =
         apiResponse?.tasks[0]?.result[0]?.money?.balance ?? 0;
 
